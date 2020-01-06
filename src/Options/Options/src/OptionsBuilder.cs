@@ -12,6 +12,8 @@ namespace Microsoft.Extensions.Options
     /// <typeparam name="TOptions">The type of options being requested.</typeparam>
     public class OptionsBuilder<TOptions> where TOptions : class
     {
+        private const string DefaultValidationFailureMessage = "A validation error has occured.";
+
         /// <summary>
         /// The default name of the <typeparamref name="TOptions"/> instance.
         /// </summary>
@@ -211,7 +213,7 @@ namespace Microsoft.Extensions.Options
 
         /// <summary>
         /// Registers an action used to post configure a particular type of options.
-        /// Note: These are run before after <seealso cref="Configure(Action{TOptions})"/>.
+        /// Note: These are run after all <seealso cref="Configure(Action{TOptions})"/>.
         /// </summary>
         /// <typeparam name="TDep">The dependency used by the action.</typeparam>
         /// <param name="configureOptions">The action used to configure the options.</param>
@@ -231,7 +233,7 @@ namespace Microsoft.Extensions.Options
 
         /// <summary>
         /// Registers an action used to post configure a particular type of options.
-        /// Note: These are run before after <seealso cref="Configure(Action{TOptions})"/>.
+        /// Note: These are run after all <seealso cref="Configure(Action{TOptions})"/>.
         /// </summary>
         /// <typeparam name="TDep1">The first dependency used by the action.</typeparam>
         /// <typeparam name="TDep2">The second dependency used by the action.</typeparam>
@@ -253,7 +255,7 @@ namespace Microsoft.Extensions.Options
 
         /// <summary>
         /// Registers an action used to post configure a particular type of options.
-        /// Note: These are run before after <seealso cref="Configure(Action{TOptions})"/>.
+        /// Note: These are run after all <seealso cref="Configure(Action{TOptions})"/>.
         /// </summary>
         /// <typeparam name="TDep1">The first dependency used by the action.</typeparam>
         /// <typeparam name="TDep2">The second dependency used by the action.</typeparam>
@@ -282,7 +284,7 @@ namespace Microsoft.Extensions.Options
 
         /// <summary>
         /// Registers an action used to post configure a particular type of options.
-        /// Note: These are run before after <seealso cref="Configure(Action{TOptions})"/>.
+        /// Note: These are run after all <seealso cref="Configure(Action{TOptions})"/>.
         /// </summary>
         /// <typeparam name="TDep1">The first dependency used by the action.</typeparam>
         /// <typeparam name="TDep2">The second dependency used by the action.</typeparam>
@@ -314,7 +316,7 @@ namespace Microsoft.Extensions.Options
 
         /// <summary>
         /// Registers an action used to post configure a particular type of options.
-        /// Note: These are run before after <seealso cref="Configure(Action{TOptions})"/>.
+        /// Note: These are run after all <seealso cref="Configure(Action{TOptions})"/>.
         /// </summary>
         /// <typeparam name="TDep1">The first dependency used by the action.</typeparam>
         /// <typeparam name="TDep2">The second dependency used by the action.</typeparam>
@@ -348,12 +350,12 @@ namespace Microsoft.Extensions.Options
         }
 
         /// <summary>
-        /// Register a validation action for an options type using a default failure message..
+        /// Register a validation action for an options type using a default failure message.
         /// </summary>
         /// <param name="validation">The validation function.</param>
         /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
         public virtual OptionsBuilder<TOptions> Validate(Func<TOptions, bool> validation)
-            => Validate(validation: validation, failureMessage: "A validation error has occured.");
+            => Validate(validation: validation, failureMessage: DefaultValidationFailureMessage);
 
         /// <summary>
         /// Register a validation action for an options type.
@@ -369,6 +371,188 @@ namespace Microsoft.Extensions.Options
             }
 
             Services.AddSingleton<IValidateOptions<TOptions>>(new ValidateOptions<TOptions>(Name, validation, failureMessage));
+            return this;
+        }
+
+        /// <summary>
+        /// Register a validation action for an options type using a default failure message.
+        /// </summary>
+        /// <typeparam name="TDep">The dependency used by the validation function.</typeparam>
+        /// <param name="validation">The validation function.</param>
+        /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
+        public virtual OptionsBuilder<TOptions> Validate<TDep>(Func<TOptions, TDep, bool> validation)
+            => Validate(validation: validation, failureMessage: DefaultValidationFailureMessage);
+
+        /// <summary>
+        /// Register a validation action for an options type.
+        /// </summary>
+        /// <typeparam name="TDep">The dependency used by the validation function.</typeparam>
+        /// <param name="validation">The validation function.</param>
+        /// <param name="failureMessage">The failure message to use when validation fails.</param>
+        /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
+        public virtual OptionsBuilder<TOptions> Validate<TDep>(Func<TOptions, TDep, bool> validation, string failureMessage)
+        {
+            if (validation == null)
+            {
+                throw new ArgumentNullException(nameof(validation));
+            }
+
+            Services.AddTransient<IValidateOptions<TOptions>>(sp =>
+                new ValidateOptions<TOptions, TDep>(Name, sp.GetRequiredService<TDep>(), validation, failureMessage));
+            return this;
+        }
+
+        /// <summary>
+        /// Register a validation action for an options type using a default failure message.
+        /// </summary>
+        /// <typeparam name="TDep1">The first dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep2">The second dependency used by the validation function.</typeparam>
+        /// <param name="validation">The validation function.</param>
+        /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
+        public virtual OptionsBuilder<TOptions> Validate<TDep1, TDep2>(Func<TOptions, TDep1, TDep2, bool> validation)
+            => Validate(validation: validation, failureMessage: DefaultValidationFailureMessage);
+
+        /// <summary>
+        /// Register a validation action for an options type.
+        /// </summary>
+        /// <typeparam name="TDep1">The first dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep2">The second dependency used by the validation function.</typeparam>
+        /// <param name="validation">The validation function.</param>
+        /// <param name="failureMessage">The failure message to use when validation fails.</param>
+        /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
+        public virtual OptionsBuilder<TOptions> Validate<TDep1, TDep2>(Func<TOptions, TDep1, TDep2, bool> validation, string failureMessage)
+        {
+            if (validation == null)
+            {
+                throw new ArgumentNullException(nameof(validation));
+            }
+
+            Services.AddTransient<IValidateOptions<TOptions>>(sp =>
+                new ValidateOptions<TOptions, TDep1, TDep2>(Name,
+                    sp.GetRequiredService<TDep1>(),
+                    sp.GetRequiredService<TDep2>(),
+                    validation,
+                    failureMessage));
+            return this;
+        }
+
+        /// <summary>
+        /// Register a validation action for an options type using a default failure message.
+        /// </summary>
+        /// <typeparam name="TDep1">The first dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep2">The second dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep3">The third dependency used by the validation function.</typeparam>
+        /// <param name="validation">The validation function.</param>
+        /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
+        public virtual OptionsBuilder<TOptions> Validate<TDep1, TDep2, TDep3>(Func<TOptions, TDep1, TDep2, TDep3, bool> validation)
+            => Validate(validation: validation, failureMessage: DefaultValidationFailureMessage);
+
+        /// <summary>
+        /// Register a validation action for an options type.
+        /// </summary>
+        /// <typeparam name="TDep1">The first dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep2">The second dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep3">The third dependency used by the validation function.</typeparam>
+        /// <param name="validation">The validation function.</param>
+        /// <param name="failureMessage">The failure message to use when validation fails.</param>
+        /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
+        public virtual OptionsBuilder<TOptions> Validate<TDep1, TDep2, TDep3>(Func<TOptions, TDep1, TDep2, TDep3, bool> validation, string failureMessage)
+        {
+            if (validation == null)
+            {
+                throw new ArgumentNullException(nameof(validation));
+            }
+
+            Services.AddTransient<IValidateOptions<TOptions>>(sp =>
+                new ValidateOptions<TOptions, TDep1, TDep2, TDep3>(Name,
+                    sp.GetRequiredService<TDep1>(),
+                    sp.GetRequiredService<TDep2>(),
+                    sp.GetRequiredService<TDep3>(),
+                    validation,
+                    failureMessage));
+            return this;
+        }
+
+        /// <summary>
+        /// Register a validation action for an options type using a default failure message.
+        /// </summary>
+        /// <typeparam name="TDep1">The first dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep2">The second dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep3">The third dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep4">The fourth dependency used by the validation function.</typeparam>
+        /// <param name="validation">The validation function.</param>
+        /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
+        public virtual OptionsBuilder<TOptions> Validate<TDep1, TDep2, TDep3, TDep4>(Func<TOptions, TDep1, TDep2, TDep3, TDep4, bool> validation)
+            => Validate(validation: validation, failureMessage: DefaultValidationFailureMessage);
+
+        /// <summary>
+        /// Register a validation action for an options type.
+        /// </summary>
+        /// <typeparam name="TDep1">The first dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep2">The second dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep3">The third dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep4">The fourth dependency used by the validation function.</typeparam>
+        /// <param name="validation">The validation function.</param>
+        /// <param name="failureMessage">The failure message to use when validation fails.</param>
+        /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
+        public virtual OptionsBuilder<TOptions> Validate<TDep1, TDep2, TDep3, TDep4>(Func<TOptions, TDep1, TDep2, TDep3, TDep4, bool> validation, string failureMessage)
+        {
+            if (validation == null)
+            {
+                throw new ArgumentNullException(nameof(validation));
+            }
+
+            Services.AddTransient<IValidateOptions<TOptions>>(sp =>
+                new ValidateOptions<TOptions, TDep1, TDep2, TDep3, TDep4>(Name,
+                    sp.GetRequiredService<TDep1>(),
+                    sp.GetRequiredService<TDep2>(),
+                    sp.GetRequiredService<TDep3>(),
+                    sp.GetRequiredService<TDep4>(),
+                    validation,
+                    failureMessage));
+            return this;
+        }
+
+        /// <summary>
+        /// Register a validation action for an options type using a default failure message.
+        /// </summary>
+        /// <typeparam name="TDep1">The first dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep2">The second dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep3">The third dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep4">The fourth dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep5">The fifth dependency used by the validation function.</typeparam>
+        /// <param name="validation">The validation function.</param>
+        /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
+        public virtual OptionsBuilder<TOptions> Validate<TDep1, TDep2, TDep3, TDep4, TDep5>(Func<TOptions, TDep1, TDep2, TDep3, TDep4, TDep5, bool> validation)
+            => Validate(validation: validation, failureMessage: DefaultValidationFailureMessage);
+
+        /// <summary>
+        /// Register a validation action for an options type.
+        /// </summary>
+        /// <typeparam name="TDep1">The first dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep2">The second dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep3">The third dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep4">The fourth dependency used by the validation function.</typeparam>
+        /// <typeparam name="TDep5">The fifth dependency used by the validation function.</typeparam>
+        /// <param name="validation">The validation function.</param>
+        /// <param name="failureMessage">The failure message to use when validation fails.</param>
+        /// <returns>The current <see cref="OptionsBuilder{TOptions}"/>.</returns>
+        public virtual OptionsBuilder<TOptions> Validate<TDep1, TDep2, TDep3, TDep4, TDep5>(Func<TOptions, TDep1, TDep2, TDep3, TDep4, TDep5, bool> validation, string failureMessage)
+        {
+            if (validation == null)
+            {
+                throw new ArgumentNullException(nameof(validation));
+            }
+
+            Services.AddTransient<IValidateOptions<TOptions>>(sp =>
+                new ValidateOptions<TOptions, TDep1, TDep2, TDep3, TDep4, TDep5>(Name,
+                    sp.GetRequiredService<TDep1>(),
+                    sp.GetRequiredService<TDep2>(),
+                    sp.GetRequiredService<TDep3>(),
+                    sp.GetRequiredService<TDep4>(),
+                    sp.GetRequiredService<TDep5>(),
+                    validation,
+                    failureMessage));
             return this;
         }
     }

@@ -146,30 +146,6 @@ namespace Microsoft.Extensions.Localization
             }
         }
 
-        /// <summary>
-        /// Creates a new <see cref="ResourceManagerStringLocalizer"/> for a specific <see cref="CultureInfo"/>.
-        /// </summary>
-        /// <param name="culture">The <see cref="CultureInfo"/> to use.</param>
-        /// <returns>A culture-specific <see cref="ResourceManagerStringLocalizer"/>.</returns>
-        [Obsolete("This method is obsolete. Use `CurrentCulture` and `CurrentUICulture` instead.")]
-        public IStringLocalizer WithCulture(CultureInfo culture)
-        {
-            return culture == null
-                ? new ResourceManagerStringLocalizer(
-                    _resourceManager,
-                    _resourceStringProvider,
-                    _resourceBaseName,
-                    _resourceNamesCache,
-                    _logger)
-                : new ResourceManagerWithCultureStringLocalizer(
-                    _resourceManager,
-                    _resourceStringProvider,
-                    _resourceBaseName,
-                    _resourceNamesCache,
-                    culture,
-                    _logger);
-        }
-
         /// <inheritdoc />
         public virtual IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures) =>
             GetAllStrings(includeParentCultures, CultureInfo.CurrentUICulture);
@@ -177,7 +153,7 @@ namespace Microsoft.Extensions.Localization
         /// <summary>
         /// Returns all strings in the specified culture.
         /// </summary>
-        /// <param name="includeParentCultures"></param>
+        /// <param name="includeParentCultures">Whether to include parent cultures in the search for a resource.</param>
         /// <param name="culture">The <see cref="CultureInfo"/> to get strings for.</param>
         /// <returns>The strings.</returns>
         protected IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures, CultureInfo culture)

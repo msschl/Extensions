@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Xunit.Sdk;
 
-namespace Microsoft.AspNetCore.Testing.xunit
+namespace Microsoft.AspNetCore.Testing
 {
     /// <summary>
     /// Marks a test as "Flaky" so that the build will sequester it and ignore failures.
@@ -13,7 +13,7 @@ namespace Microsoft.AspNetCore.Testing.xunit
     /// properties. Once these traits are applied, build scripts can include/exclude tests based on them.
     /// </para>
     /// <para>
-    /// All flakiness-related traits start with <code>Flaky:</code> and are grouped first by the process running the tests: Azure Pipelines (AzP) or Helix.
+    /// All flakiness-related traits start with <c>Flaky:</c> and are grouped first by the process running the tests: Azure Pipelines (AzP) or Helix.
     /// Then there is a segment specifying the "selector" which indicates where the test is flaky. Finally a segment specifying the value of that selector.
     /// The value of these traits is always either "true" or the trait is not present. We encode the entire selector in the name of the trait because xUnit.net only
     /// provides "==" and "!=" operators for traits, there is no way to check if a trait "contains" or "does not contain" a value. VSTest does support "contains" checks
@@ -49,8 +49,8 @@ namespace Microsoft.AspNetCore.Testing.xunit
     /// to <c>xunit.console.exe</c>. Similarly, it can run only flaky tests using <c>-trait "Flaky:AzP:OS:all=true" -trait "Flaky:AzP:OS:Darwin=true"</c>
     /// </para>
     /// </example>
-    [TraitDiscoverer("Microsoft.AspNetCore.Testing.xunit.FlakyTestDiscoverer", "Microsoft.AspNetCore.Testing")]
-    [AttributeUsage(AttributeTargets.Method)]
+    [TraitDiscoverer("Microsoft.AspNetCore.Testing." + nameof(FlakyTraitDiscoverer), "Microsoft.AspNetCore.Testing")]
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class | AttributeTargets.Assembly)]
     public sealed class FlakyAttribute : Attribute, ITraitAttribute
     {
         /// <summary>
@@ -72,12 +72,12 @@ namespace Microsoft.AspNetCore.Testing.xunit
         /// <param name="additionalFilters">A list of additional filters that define where this test is flaky. Use values in <see cref="FlakyOn"/>.</param>
         public FlakyAttribute(string gitHubIssueUrl, string firstFilter, params string[] additionalFilters)
         {
-            if(string.IsNullOrEmpty(gitHubIssueUrl))
+            if (string.IsNullOrEmpty(gitHubIssueUrl))
             {
                 throw new ArgumentNullException(nameof(gitHubIssueUrl));
             }
 
-            if(string.IsNullOrEmpty(firstFilter))
+            if (string.IsNullOrEmpty(firstFilter))
             {
                 throw new ArgumentNullException(nameof(firstFilter));
             }
